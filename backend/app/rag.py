@@ -55,8 +55,28 @@ def answer_question(question: str, user_id: int):
       # this is an approximation and may not be accurate
       tokens_used = llms.get_tokens_used()
        
-      if not docs:
-          return "No relevant documents found."
-      random_doc = random.choice(docs)
+def generate_exam(num_questions:int , user_id:int):
+    all_docs = vectorstore.get(where={"user_id": user_id})["documents"]
+    if len(all_docs) < num_questions:
+        raise ValueError("Not enough documents to generate exam")
+    
+    selected_docs = random.sample(all_docs, num_questions)
+    questions = []
+    
+    for i in range(num_questions // 2):
+        prompt = f"generate a question and answer based on the following document:\n\n {selected_docs[i].page_content}\n\n"
+        question = llms(prompt)
+        questions.append(question)
+    
+    for i in range(num_questions // 2, num_questions):
+        doc1 , doc2 = random.sample(selected_docs, 2)
+        prompt = (
+            f"generate a question that combines information from the followig texts \n\n"
+            f"Text 1: {doc1.page_content}\n Text 2: {doc2.page_content}\n\n"
+        )
+        question = llms(prompt)
+        questions.append(question)
+        
+    return questions
         
    
